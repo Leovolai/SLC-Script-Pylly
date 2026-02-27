@@ -1,5 +1,5 @@
 ﻿var settings = {
-  "ReplacementWord": "kissa",
-  "CooldownMessages": 0,
-  "Frequency": 100
+  "ReplacementWord": "koira",
+  "CooldownMessages": 4,
+  "Frequency": 1.0
 };

@@ -3,7 +3,11 @@ import codecs
 import os
 
 import random
-import time
+
+# Use a SystemRandom instance so selections are based on OS entropy
+# rather than the module state, which may be re-seeded by the chatbot
+# environment each time the script is reloaded.
+_sysrand = random.SystemRandom()
 
 ScriptName = "Pylly"
 Description = "Vaihtaa satunnaisen sanan 'pyllyksi'."
@@ -60,28 +64,22 @@ def Execute(data):
 
     if len(words) < 2:
         return
-    
-    # Percentile conversion
-    frequency_chance = Settings.Frequency / 100.0
 
-    seed_value = hash(message + str(time.time())) % (2**32)
-    random.seed(seed_value)
-
-    if random.random() < frequency_chance:
-
-        random_int = int(random.random() * 1000000)
-        index_to_replace = random_int % len(words)
+    # Probability check (use system RNG)
+    if _sysrand.random() < float(Settings.Frequency):
+        # uniformly pick an index from 0..len(words)-1 using SystemRandom
+        index_to_replace = _sysrand.randrange(len(words))
 
         Parent.Log(
             "DEBUG",
-            "len(words) = {0}, random_int = {1}, Selected index: {2}".format(
-                len(words), random_int, index_to_replace
+            "Word amount = {0}, Selected index: {1}, Replacement chance: {2}".format(
+                len(words), index_to_replace, Settings.Frequency
             ),
         )
 
+        # Replace the word
         words[index_to_replace] = Settings.ReplacementWord
         new_message = " ".join(words)
-
         Parent.SendStreamMessage(new_message)
 
         # Activate cooldown
