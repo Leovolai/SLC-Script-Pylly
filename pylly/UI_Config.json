@@ -1,0 +1,28 @@
+{
+    "output_file": "settings.json",
+    "ReplacementWord": {
+        "type": "textbox",
+        "value": "pylly",
+        "label": "Korvaava sana",
+        "tooltip": "Sana, joka korvaa toisen sanan viestistä.",
+        "group": "Yleiset"
+    },
+    "CooldownMessages": {
+        "type": "numberbox",
+        "value": 10,
+        "min": 0,
+        "label": "Jäähyn pituus",
+        "tooltip": "Kuinka monen viestin päästä skripti alkaa taas skannaamaan korvattavia viestejä.",
+        "group": "Yleiset"
+    },
+    "Frequency": {
+        "type": "slider",
+        "value": 0,
+        "min": 0,
+        "max": 100,
+        "ticks": 1,
+        "label": "Pyllyttämisen todennäköisyys (%)",
+        "tooltip": "Kuinka suurella todennäköisyydellä skripti yrittää pyllyttää satunnaisen viestin.",
+        "group": "Yleiset"
+    }
+}
