@@ -1,5 +1,5 @@
 ﻿{
-  "ReplacementWord": "koira",
-  "CooldownMessages": 4,
-  "Frequency": 1.0
+  "ReplacementWord": "pylly",
+  "CooldownMessages": 10,
+  "Frequency": 0.1
 }

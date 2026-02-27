@@ -3,6 +3,7 @@ import codecs
 import os
 
 import random
+import string
 
 # Use a SystemRandom instance so selections are based on OS entropy
 # rather than the module state, which may be re-seeded by the chatbot
@@ -32,17 +33,37 @@ Settings = ScriptSettings()
 
 CooldownRemaining = 0
 
+def ReloadSettings(jsonData):
+    Parent.Log("DEBUG", "ReloadSettings CALLED")
+    data = json.loads(jsonData)
+    Settings.__dict__.update(data)
+
+def format_replacement(original, replacement):
+    start_punct = ''
+    end_punct = ''
+    while original and original[0] in string.punctuation:
+        start_punct += original[0]
+        original = original[1:]
+    while original and original[-1] in string.punctuation:
+        end_punct = original[-1] + end_punct
+        original = original[:-1]
+
+    if original.isupper():
+        replacement = replacement.upper()
+    elif original.istitle():
+        replacement = replacement.title()
+    elif original.islower():
+        replacement = replacement.lower()
+    else:
+        pass
+    return start_punct + replacement + end_punct
+
 def Init():
     if os.path.isfile(SettingsFile):
         Settings.__dict__.update(
             ScriptSettings(SettingsFile).__dict__
         )
     return
-
-def ReloadSettings(jsonData):
-    Parent.Log("DEBUG", "ReloadSettings CALLED")
-    data = json.loads(jsonData)
-    Settings.__dict__.update(data)
     
 def Execute(data):
     global CooldownRemaining
@@ -78,7 +99,7 @@ def Execute(data):
         )
 
         # Replace the word
-        words[index_to_replace] = Settings.ReplacementWord
+        words[index_to_replace] = format_replacement(words[index_to_replace], Settings.ReplacementWord)
         new_message = " ".join(words)
         Parent.SendStreamMessage(new_message)
 
