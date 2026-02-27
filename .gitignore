@@ -1,0 +1,3 @@
+# Ignore the settings.json inside the pylly folder
+pylly/settings.json
+pylly/settings.js
