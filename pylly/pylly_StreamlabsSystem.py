@@ -59,19 +59,14 @@ def format_replacement(original, replacement):
         pass
     return start_punct + replacement + end_punct
 
-def Init():
-    if os.path.isfile(SettingsFile):
-        Settings.__dict__.update(
-            ScriptSettings(SettingsFile).__dict__
-        )
-    return
+# IGNORE LIST
+IGNORE_WORDS = {
+"ja", "sekä", "tai", "vai", "eli", "mutta", "vaan", "sillä", "että", "jotta", "koska", "jos", "ellei", "jollei", "mikäli", "kun",
+"kunhan", "kunnes", "joskin", "vaikka"
+}
 
 # ==========
 # SIJAMUODOT
-# ==========
-
-# ==========
-# SIJAMUODOT (Option B)
 # ==========
 
 CASE_SUFFIXES = [
@@ -111,6 +106,13 @@ def inflect_replacement(original_word, replacement_base):
 # =====================
 # SIJAMUOTOILUJEN LOPPU
 # =====================
+
+def Init():
+    if os.path.isfile(SettingsFile):
+        Settings.__dict__.update(
+            ScriptSettings(SettingsFile).__dict__
+        )
+    return
     
 def Execute(data):
     global CooldownRemaining
@@ -128,6 +130,7 @@ def Execute(data):
         return
 
     message = data.Message
+    
     words = [w.strip() for w in message.split() if w.strip()]
 
     if len(words) < 2:
@@ -136,32 +139,39 @@ def Execute(data):
     if _sysrand.random() < float(Settings.Frequency) / 100:
 
         word_count = len(words)
-        # Decide how many words to replace
+
         replacement_count = 1
         replace_threshold = 12
 
         if word_count > replace_threshold:
             replacement_count += (word_count // replace_threshold)
 
-        replacement_count = min(replacement_count, word_count)
+        # Build a list of candidate indices that are NOT in the ignore list
+        candidate_indices = [
+            i for i, w in enumerate(words)
+            if w.lower().strip(string.punctuation) not in IGNORE_WORDS
+        ]
 
-        indices_to_replace = _sysrand.sample(range(word_count), replacement_count)
+        # If there are candidates, select indices to replace
+        if candidate_indices:
+            replacement_count = min(replacement_count, len(candidate_indices))
+            indices_to_replace = _sysrand.sample(candidate_indices, replacement_count)
 
-        for index in indices_to_replace:
-            replacement = inflect_replacement(words[index], Settings.ReplacementWord)
-            words[index] = format_replacement(words[index], replacement)
+            for index in indices_to_replace:
+                replacement = inflect_replacement(words[index], Settings.ReplacementWord)
+                words[index] = format_replacement(words[index], replacement)
 
-        new_message = " ".join(words)
-        Parent.SendStreamMessage(new_message)
+            new_message = " ".join(words)
+            Parent.SendStreamMessage(new_message)
 
-        CooldownRemaining = Settings.CooldownMessages
+            CooldownRemaining = Settings.CooldownMessages
 
-        Parent.Log(
-            "DEBUG",
-            "Word amount = {0}, Replacement count = {1}, Indices: {2}, Replacement chance: {3}".format(
-                word_count, replacement_count, indices_to_replace, Settings.Frequency
-            ),
-        )
+            Parent.Log(
+                "DEBUG",
+                "Word amount = {0}, Replacement count = {1}, Indices: {2}, Replacement chance: {3}".format(
+                    word_count, replacement_count, indices_to_replace, Settings.Frequency
+                ),
+            )
 
 def Tick():
     return
