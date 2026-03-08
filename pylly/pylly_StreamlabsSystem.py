@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import codecs
 import os
@@ -22,7 +23,7 @@ class ScriptSettings(object):
     def __init__(self, settingsfile=None):
         self.ReplacementWord = "pylly"
         self.CooldownMessages = 10
-        self.Frequency = 1
+        self.Frequency = 100
 
         if settingsfile:
             with codecs.open(settingsfile, encoding="utf-8-sig", mode="r") as f:
@@ -64,6 +65,62 @@ def Init():
             ScriptSettings(SettingsFile).__dict__
         )
     return
+
+# ==========
+# SIJAMUODOT
+# ==========
+
+CASE_SUFFIXES = [
+    "ssa", "ssä",   # inessiivi
+    "sta", "stä",   # ellatiivi
+    "lla", "llä",   # adessiivi
+    "lta", "ltä",   # ablatiivi
+    "lle",          # allatiivi
+    "ksi",          # translatiivi
+    "tta", "ttä",   # abessiivi
+    "na", "nä",     # essiivi
+    "ta", "tä",     # partitiivi
+    "n",            # genetiivi
+]
+
+def strip_punctuation(word):
+    start = ''
+    end = ''
+
+    while word and word[0] in string.punctuation:
+        start += word[0]
+        word = word[1:]
+
+    while word and word[-1] in string.punctuation:
+        end = word[-1] + end
+        word = word[:-1]
+    
+    return start, word, end
+
+def detect_suffix(word):
+    lower = word.lower()
+
+    for suffix in CASE_SUFFIXES:
+        if lower.endswith(suffix):
+            return suffix
+        
+    return ""
+
+def inflect_replacement(original_word, replacement_base):
+    start_punct, core_word, end_punct = strip_punctuation(original_word)
+
+    suffix = detect_suffix(core_word)
+
+    if suffix:
+        replacement = replacement_base + suffix
+    else:
+        replacement = replacement_base
+
+    return start_punct + replacement + end_punct
+
+# =====================
+# SIJAMUOTOILUJEN LOPPU
+# =====================
     
 def Execute(data):
     global CooldownRemaining
@@ -86,25 +143,35 @@ def Execute(data):
     if len(words) < 2:
         return
 
-    # Probability check (use system RNG)
-    if _sysrand.random() < float(Settings.Frequency):
-        # uniformly pick an index from 0..len(words)-1 using SystemRandom
-        index_to_replace = _sysrand.randrange(len(words))
+    if _sysrand.random() < float(Settings.Frequency) / 100:
 
-        Parent.Log(
-            "DEBUG",
-            "Word amount = {0}, Selected index: {1}, Replacement chance: {2}".format(
-                len(words), index_to_replace, Settings.Frequency
-            ),
-        )
+        word_count = len(words)
+        # Decide how many words to replace
+        replacement_count = 1
+        replace_threshold = 12
 
-        # Replace the word
-        words[index_to_replace] = format_replacement(words[index_to_replace], Settings.ReplacementWord)
+        if word_count > replace_threshold:
+            replacement_count += (word_count // replace_threshold)
+
+        replacement_count = min(replacement_count, word_count)
+
+        indices_to_replace = _sysrand.sample(range(word_count), replacement_count)
+
+        for index in indices_to_replace:
+            replacement = inflect_replacement(words[index], Settings.ReplacementWord)
+            words[index] = format_replacement(words[index], replacement)
+
         new_message = " ".join(words)
         Parent.SendStreamMessage(new_message)
 
-        # Activate cooldown
         CooldownRemaining = Settings.CooldownMessages
+
+        Parent.Log(
+            "DEBUG",
+            "Word amount = {0}, Replacement count = {1}, Indices: {2}, Replacement chance: {3}".format(
+                word_count, replacement_count, indices_to_replace, Settings.Frequency
+            ),
+        )
 
 def Tick():
     return
