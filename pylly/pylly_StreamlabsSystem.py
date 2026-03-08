@@ -70,9 +70,13 @@ def Init():
 # SIJAMUODOT
 # ==========
 
+# ==========
+# SIJAMUODOT (Option B)
+# ==========
+
 CASE_SUFFIXES = [
     "ssa", "ssä",   # inessiivi
-    "sta", "stä",   # ellatiivi
+    "sta", "stä",   # elatiivi
     "lla", "llä",   # adessiivi
     "lta", "ltä",   # ablatiivi
     "lle",          # allatiivi
@@ -83,31 +87,17 @@ CASE_SUFFIXES = [
     "n",            # genetiivi
 ]
 
-def strip_punctuation(word):
-    start = ''
-    end = ''
-
-    while word and word[0] in string.punctuation:
-        start += word[0]
-        word = word[1:]
-
-    while word and word[-1] in string.punctuation:
-        end = word[-1] + end
-        word = word[:-1]
-    
-    return start, word, end
-
 def detect_suffix(word):
     lower = word.lower()
-
     for suffix in CASE_SUFFIXES:
         if lower.endswith(suffix):
             return suffix
-        
     return ""
 
+
 def inflect_replacement(original_word, replacement_base):
-    start_punct, core_word, end_punct = strip_punctuation(original_word)
+    # Strip punctuation for suffix detection
+    core_word = original_word.strip(string.punctuation)
 
     suffix = detect_suffix(core_word)
 
@@ -116,7 +106,7 @@ def inflect_replacement(original_word, replacement_base):
     else:
         replacement = replacement_base
 
-    return start_punct + replacement + end_punct
+    return replacement
 
 # =====================
 # SIJAMUOTOILUJEN LOPPU
